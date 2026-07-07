@@ -1,111 +1,160 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import type { TenderFilters } from "@/lib/api"
-
-const REGIONS = ["Астана", "Алматы", "Шымкент", "Актобе", "Атырау", "Костанай", "Павлодар", "Семей", "Усть-Каменогорск", "Кокшетау"]
-const STATUSES = ["active", "completed", "canceled", "paused"] as const
-
+import { useState } from "react";
+import { MapPin, DollarSign, Search, X, Loader2 } from "lucide-react";
+import { KAZAKHSTAN_REGIONS, ALMATY_DISTRICTS, PRICE_PRESETS } from "@/lib/regions";
+import type { TenderFilters } from "@/lib/api";
+const EMPTY_FILTERS: TenderFilters = {
+  region: null,
+  district: null,
+  price_min: null,
+  price_max: null,
+  keyword: null,
+};
 interface Props {
-  filters: TenderFilters
-  onChange: (f: TenderFilters) => void
-  totalFound: number
-  totalAll: number
+  onSearch: (filters: TenderFilters) => void;
+  searching?: boolean;
 }
-
-export default function FilterPanel({ filters, onChange, totalFound, totalAll }: Props) {
-  const [open, setOpen] = useState(false)
-
-  function clear() {
-    onChange({ keyword: "", region: undefined, price_min: undefined, price_max: undefined })
+export default function FilterPanel({ onSearch, searching }: Props) {
+  const [filters, setFilters] = useState<TenderFilters>(EMPTY_FILTERS);
+  const [keywordInput, setKeywordInput] = useState("");
+  function set<K extends keyof TenderFilters>(key: K, value: TenderFilters[K]) {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   }
-
-  const hasActive = !!(filters.keyword || filters.region || filters.price_min || filters.price_max)
-
+  function reset() {
+    setFilters(EMPTY_FILTERS);
+    setKeywordInput("");
+    onSearch(EMPTY_FILTERS);
+  }
+  function apply() {
+    onSearch({ ...filters, keyword: keywordInput || null });
+  }
+  const showDistricts = filters.region === "Алматы";
   return (
-    <div className="bg-card border border-border rounded-lg p-4 mb-4">
-      {/* Search row */}
-      <div className="flex gap-2 mb-3">
-        <div className="relative flex-1">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Поиск по названию, описанию..."
-            value={filters.keyword ?? ""}
-            onChange={e => onChange({ ...filters, keyword: e.target.value })}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-background border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </div>
-        <button
-          onClick={() => setOpen(v => !v)}
-          className={`flex items-center gap-1.5 px-3 py-2 text-sm border rounded-md transition-colors ${open ? "border-[#c89b3c] text-[#c89b3c] bg-[#2a2010]" : "border-border text-muted-foreground hover:border-[#c89b3c44]"}`}
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 12h10M11 20h2" />
-          </svg>
-          Фильтры
-          {hasActive && <span className="w-2 h-2 rounded-full bg-[#c89b3c]" />}
-        </button>
-        {hasActive && (
+    <div className="rounded-xl border border-border bg-popover p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-serif text-lg text-foreground">Фильтры — РК</h3>
+        {(filters.region || filters.price_min || filters.price_max || keywordInput) && (
           <button
-            onClick={clear}
-            className="px-3 py-2 text-sm text-muted-foreground border border-border rounded-md hover:text-foreground hover:border-[#c89b3c44] transition-colors"
+            onClick={reset}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-crimson transition-colors"
           >
-            Сбросить
+            <X size={12} /> Сбросить
           </button>
         )}
       </div>
-
-      {/* Expanded filters */}
-      {open && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-border">
-          {/* Region */}
-          <div>
-            <label className="block text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Регион</label>
-            <select
-              value={filters.region ?? ""}
-              onChange={e => onChange({ ...filters, region: e.target.value || undefined })}
-              className="w-full py-2 px-3 text-sm bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Все регионы</option>
-              {REGIONS.map(r => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Price min */}
-          <div>
-            <label className="block text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Цена от (KZT)</label>
-            <input
-              type="number"
-              placeholder="0"
-              value={filters.price_min ?? ""}
-              onChange={e => onChange({ ...filters, price_min: e.target.value ? Number(e.target.value) : undefined })}
-              className="w-full py-2 px-3 text-sm bg-background border border-border rounded-md text-foreground font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+      <div className="mb-4">
+        <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <Search size={12} /> Ключевое слово
+        </label>
+        <input
+          type="text"
+          value={keywordInput}
+          onChange={(e) => setKeywordInput(e.target.value)}
+          placeholder="например: оборудование, ремонт..."
+          className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-primary transition-colors"
+        />
+      </div>
+      <div className="mb-4">
+        <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <MapPin size={12} /> Регион
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          <Chip
+            label="Все"
+            active={!filters.region}
+            onClick={() => {
+              set("region", null);
+              set("district", null);
+            }}
+          />
+          {KAZAKHSTAN_REGIONS.map((r) => (
+            <Chip
+              key={r}
+              label={r}
+              active={filters.region === r}
+              onClick={() => {
+                set("region", r);
+                set("district", null);
+              }}
             />
-          </div>
-
-          {/* Price max */}
-          <div>
-            <label className="block text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Цена до (KZT)</label>
-            <input
-              type="number"
-              placeholder="∞"
-              value={filters.price_max ?? ""}
-              onChange={e => onChange({ ...filters, price_max: e.target.value ? Number(e.target.value) : undefined })}
-              className="w-full py-2 px-3 text-sm bg-background border border-border rounded-md text-foreground font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+          ))}
+        </div>
+      </div>
+      {showDistricts && (
+        <div className="mb-4">
+          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Район
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            <Chip label="Весь регион" active={!filters.district} onClick={() => set("district", null)} />
+            {ALMATY_DISTRICTS.map((d) => (
+              <Chip
+                key={d}
+                label={d}
+                active={filters.district === d}
+                onClick={() => set("district", d)}
+              />
+            ))}
           </div>
         </div>
       )}
-
-      {/* Count */}
-      <div className="mt-3 text-[11px] text-muted-foreground font-mono">
-        Найдено <span className="text-[#c89b3c] font-bold">{totalFound}</span> из {totalAll} тендеров
+      <div className="mb-5">
+        <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <DollarSign size={12} /> Цена
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          <Chip
+            label="Любая"
+            active={!filters.price_min && !filters.price_max}
+            onClick={() => {
+              set("price_min", null);
+              set("price_max", null);
+            }}
+          />
+          {PRICE_PRESETS.map((p) => (
+            <Chip
+              key={p.label}
+              label={p.label}
+              active={filters.price_min === p.min && filters.price_max === (p.max || null)}
+              onClick={() => {
+                set("price_min", p.min || null);
+                set("price_max", p.max || null);
+              }}
+            />
+          ))}
+        </div>
       </div>
+      <button
+        onClick={apply}
+        disabled={searching}
+        className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+      >
+        {searching && <Loader2 size={14} className="animate-spin" />}
+        {searching ? "Ищу..." : "Найти тендеры"}
+      </button>
     </div>
-  )
+  );
+}
+function Chip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+        active
+          ? "border-primary bg-primary/15 text-primary"
+          : "border-border text-muted-foreground hover:border-muted-foreground"
+      }`}
+    >
+      {label}
+    </button>
+  );
 }

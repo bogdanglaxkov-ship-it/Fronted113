@@ -1,144 +1,84 @@
-// ─────────────────────────────────────────────
-//  API SERVICE — подключается к FastAPI бэкенду
-//  Все эндпоинты из main.py
-// ─────────────────────────────────────────────
-
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-
-async function req<T>(path: string, opts?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...opts,
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => null)
-    let message = `HTTP ${res.status}`
-    if (body) {
-      const d = body.detail
-      if (typeof d === "string") message = d
-      else if (Array.isArray(d)) message = d.join(", ")
-      else if (typeof d === "object" && d !== null) message = JSON.stringify(d)
-      else if (typeof body.message === "string") message = body.message
-      else if (Array.isArray(body.message)) message = body.message.join(", ")
-    }
-    throw new Error(message)
-  }
-  return res.json() as Promise<T>
-}
-
-// ─── ТИПЫ ────────────────────────────────────
-
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+export type TenderStatus = "active" | "completed" | "canceled" | "paused";
 export interface Tender {
-  id: string
-  title: string
-  organization?: string
-  price?: number
-  region?: string
-  district?: string
-  status: "active" | "completed" | "canceled" | "paused"
-  url?: string
-  keyword?: string
-  published_at?: string
-  deadline?: string
-  participants?: number
-  description?: string
-  requirements?: string[]
-  documents?: { name: string; url: string }[]
-  contact?: string
+  id: string;
+  title: string;
+  price?: number;
+  region?: string;
+  district?: string | null;
+  organization?: string | null;
+  city?: string | null;
+  keyword?: string | null;
+  status: TenderStatus;
+  url?: string;
+  deadline?: string;
+  published_at?: string;
+  participants?: number;
+  contact?: string;
+  description?: string;
+  requirements?: string[];
+  documents?: { name: string; url: string }[];
 }
-
 export interface TenderFilters {
-  region?: string
-  district?: string
-  price_min?: number
-  price_max?: number
-  keyword?: string
+  region: string | null;
+  district: string | null;
+  price_min: number | null;
+  price_max: number | null;
+  keyword: string | null;
 }
-
-export interface ChatMessage {
-  role: "user" | "assistant"
-  content: string
+export async function fetchTenders(): Promise<Tender[]> {
+  const res = await fetch(`${API_URL}/api/tenders`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Сервер ответил ${res.status}`);
+  const data = await res.json();
+  return (data.items ?? []) as Tender[];
 }
-
-export interface AnalyticsTrends {
-  total_active: number
-  top_categories: string[]
-  average_price_drop_percentage: number
-  active_tenders_count: number
-}
-
-export interface DistrictData {
-  name: string
-  tender_count: number
-  total_budget_kzt: number
-  intensity: "high" | "medium" | "low"
-}
-
-export interface AnalyticsMap {
-  city: string
-  total_tenders: number
-  districts: DistrictData[]
-}
-
-export interface MarginResult {
-  pure_profit_kzt: number
-  margin_percentage: number
-  roi: string
-}
-
-// ─── ТЕНДЕРЫ ──────────────────────────────────
-
-export const getTenders = () =>
-  req<{ items: Tender[] }>("/api/tenders")
-
-export const getTender = (id: string) =>
-  req<Tender>(`/api/tenders/${id}`)
-
-export const searchTenders = (filters: TenderFilters) =>
-  req<{ total_count: number; items: Tender[] }>("/api/tenders/search", {
+export async function searchTenders(filters: TenderFilters): Promise<Tender[]> {
+  const res = await fetch(`${API_URL}/api/tenders/search`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ filters }),
-  })
+  });
+  if (!res.ok) throw new Error(`Сервер ответил ${res.status}`);
+  const data = await res.json();
+  return (data.items ?? data.results ?? []) as Tender[];
+}
 
-export const createTender = (tender: Omit<Tender, "id"> & { id: string }) =>
-  req<{ status: string; id: string }>("/api/tenders", {
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  email_verified: boolean;
+}
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  user?: AuthUser;
+  token?: string;
+  errors?: Record<string, string>;
+}
+
+async function postAuth(path: string, body: unknown): Promise<AuthResponse> {
+  const res = await fetch(`${API_URL}/api/auth/${path}`, {
     method: "POST",
-    body: JSON.stringify(tender),
-  })
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return (await res.json()) as AuthResponse;
+}
 
-// ─── ЧАТ ──────────────────────────────────────
-
-export const sendChat = (message: string, session_id = "user_1") =>
-  req<{ reply: string; session_id: string }>("/chat", {
-    method: "POST",
-    body: JSON.stringify({ message, session_id }),
-  })
-
-export const getChatHistory = (session_id = "user_1") =>
-  req<{ session_id: string; messages: ChatMessage[]; count: number }>(
-    `/history/${session_id}`
-  )
-
-// ─── АНАЛИТИКА ────────────────────────────────
-
-export const getAnalyticsTrends = () =>
-  req<AnalyticsTrends>("/api/analytics/trends")
-
-export const getAnalyticsMap = () =>
-  req<AnalyticsMap>("/api/analytics/map")
-
-// ─── КАЛЬКУЛЯТОР ──────────────────────────────
-
-export const calcMargin = (tender_price: number, my_cost: number) =>
-  req<MarginResult>("/api/calculator/margin", {
-    method: "POST",
-    body: JSON.stringify({ tender_price, my_cost }),
-  })
-
-// ─── ПОДПИСКИ ─────────────────────────────────
-
-export const getSubscription = (user_id: number) =>
-  req<unknown>(`/api/subscriptions/${user_id}`)
-
-export const getAllSubscriptions = () =>
-  req<{ subscriptions: unknown[] }>("/api/subscriptions")
+export function registerUser(data: { name: string; email: string; password: string }) {
+  return postAuth("register", data);
+}
+export function loginUser(data: { email: string; password: string }) {
+  return postAuth("login", data);
+}
+export function verifyEmail(token: string) {
+  return postAuth("verify-email", { token });
+}
+export function forgotPassword(email: string) {
+  return postAuth("forgot-password", { email });
+}
+export function resetPassword(token: string, password: string) {
+  return postAuth("reset-password", { token, password });
+}

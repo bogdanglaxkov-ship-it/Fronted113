@@ -40,51 +40,98 @@
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* Navy ink backgrounds */
-  --background:           #0b1629;
-  --foreground:           #e8ecf4;
+  /* Paper backgrounds — white/blue/black (default theme) */
+  --background:           #ffffff;
+  --foreground:           #10131c;
 
-  --card:                 #11203b;
-  --card-foreground:      #e8ecf4;
+  --card:                 #ffffff;
+  --card-foreground:      #10131c;
 
-  --popover:              #162847;
-  --popover-foreground:   #e8ecf4;
+  --popover:              #ffffff;
+  --popover-foreground:   #10131c;
 
-  /* Primary — gold seal */
-  --primary:              #c89b3c;
-  --primary-foreground:   #0b1629;
+  /* Primary — royal blue accent */
+  --primary:              #2952e3;
+  --primary-foreground:   #ffffff;
 
   /* Secondary panels */
-  --secondary:            #162847;
-  --secondary-foreground: #e8ecf4;
+  --secondary:            #f1f4fb;
+  --secondary-foreground: #10131c;
 
   /* Muted */
-  --muted:                #1e3150;
-  --muted-foreground:     #7a90b0;
+  --muted:                #f1f4fb;
+  --muted-foreground:     #6b7280;
 
-  /* Accent — light navy highlight */
-  --accent:               #1e3150;
-  --accent-foreground:    #c89b3c;
+  /* Accent */
+  --accent:               #e8edfc;
+  --accent-foreground:    #2952e3;
 
   /* Destructive */
-  --destructive:          #a8453a;
+  --destructive:          #dc2626;
 
   /* Borders & inputs */
-  --border:               #1e3557;
-  --input:                #1e3557;
-  --ring:                 #c89b3c;
+  --border:               #e5e7eb;
+  --input:                #f3f4f6;
+  --ring:                 #2952e3;
 
   /* Status colors */
-  --gold:                 #c89b3c;
-  --gold-muted:           #2a2010;
-  --emerald:              #1f7a5c;
-  --crimson:              #a8453a;
-  --paused:               #5b6472;
-
-  --radius: 0.5rem;
+  --gold:                 #2952e3;
+  --gold-muted:           #e8edfc;
+  --emerald:              #16a34a;
+  --crimson:              #dc2626;
+  --paused:               #9aa3b2;
 }
+
+.dark {
+  color-scheme: dark;
+
+  /* Night backgrounds (toggle theme) */
+  --background:           #0b0f1a;
+  --foreground:           #eef1f7;
+
+  --card:                 #121729;
+  --card-foreground:      #eef1f7;
+
+  --popover:              #0d1120;
+  --popover-foreground:   #eef1f7;
+
+  /* Primary — royal blue accent (unchanged, works on both) */
+  --primary:              #4f74ff;
+  --primary-foreground:   #ffffff;
+
+  /* Secondary panels */
+  --secondary:            #1a2036;
+  --secondary-foreground: #eef1f7;
+
+  /* Muted */
+  --muted:                #1c2338;
+  --muted-foreground:     #98a2b8;
+
+  /* Accent */
+  --accent:               #1c2338;
+  --accent-foreground:    #4f74ff;
+
+  /* Destructive */
+  --destructive:          #ef4444;
+
+  /* Borders & inputs */
+  --border:               #232a45;
+  --input:                #121729;
+  --ring:                 #4f74ff;
+
+  /* Status colors */
+  --gold:                 #4f74ff;
+  --gold-muted:           #1a2036;
+  --emerald:              #22c55e;
+  --crimson:              #ef4444;
+  --paused:               #7b8496;
+}
+
+.dark ::-webkit-scrollbar-track { background: #0b0f1a; }
+.dark ::-webkit-scrollbar-thumb { background: #232a45; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #4f74ff44; }
 
 @layer base {
   * {
@@ -101,6 +148,19 @@
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0b1629; }
-::-webkit-scrollbar-thumb { background: #1e3557; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #c89b3c44; }
+::-webkit-scrollbar-track { background: #ffffff; }
+::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2952e344; }
+
+/* Landing hero — "approved by AI" stamp */
+@keyframes stamp-drop {
+  0%   { opacity: 0; transform: translateY(-14px) rotate(-30deg) scale(1.4); }
+  60%  { opacity: 1; transform: translateY(2px) rotate(-9deg) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) rotate(-12deg) scale(1); }
+}
+.stamp-badge {
+  animation: stamp-drop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stamp-badge { animation: none; transform: rotate(-12deg); }
+}

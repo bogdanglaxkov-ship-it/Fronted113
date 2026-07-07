@@ -1,132 +1,243 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { getAnalyticsTrends, getAnalyticsMap } from "@/lib/api"
-import type { AnalyticsTrends, AnalyticsMap } from "@/lib/api"
+import { useEffect, useState } from "react";
+import { MapPin, X, Loader2 } from "lucide-react";
 
-function formatBudget(n: number) {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)} млрд`
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)} млн`
-  return `${n.toLocaleString("ru")}`
+interface District {
+  name: string;
+  tender_count: number;
+  total_budget_kzt: number;
+  intensity: "high" | "medium" | "low";
 }
 
-const INTENSITY_COLORS: Record<string, string> = {
-  high:   "bg-[#c89b3c]",
-  medium: "bg-[#1f7a5c]",
-  low:    "bg-[#1e3150]",
+interface MapData {
+  city: string;
+  total_tenders: number;
+  districts: District[];
 }
 
-const INTENSITY_LABEL: Record<string, string> = {
-  high: "Высокая",
-  medium: "Средняя",
-  low: "Низкая",
+interface Tender {
+  id: string;
+  title: string;
+  price: number;
+  region: string;
+  district: string | null;
+  url: string;
 }
 
-export default function AnalyticsDashboard() {
-  const [trends, setTrends] = useState<AnalyticsTrends | null>(null)
-  const [map, setMap] = useState<AnalyticsMap | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+const INTENSITY_COLOR: Record<District["intensity"], string> = {
+  high: "var(--primary)",
+  medium: "var(--gold)",
+  low: "var(--gold-muted)",
+};
 
+const INTENSITY_OPACITY: Record<District["intensity"], string> = {
+  high: "1",
+  medium: "0.65",
+  low: "0.35",
+};
+
+// ─────────────────────────────────────────────
+//  data теперь необязателен — если не передали,
+//  компонент сам загрузит /api/analytics/map.
+//  Это убирает краш "Cannot read properties of
+//  undefined (reading 'city')" когда page.tsx
+//  рендерит компонент раньше чем данные готовы.
+// ─────────────────────────────────────────────
+interface Props {
+  data?: MapData;
+}
+
+export default function AnalyticsDashboard({ data: dataProp }: Props) {
+  const [data, setData] = useState<MapData | null>(dataProp ?? null);
+  const [dataLoading, setDataLoading] = useState(!dataProp);
+  const [dataError, setDataError] = useState<string | null>(null);
+
+  const [selected, setSelected] = useState<District | null>(null);
+  const [tenders, setTenders] = useState<Tender[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+  // Если данные не передали пропом — грузим сами
   useEffect(() => {
-    Promise.all([getAnalyticsTrends(), getAnalyticsMap()])
-      .then(([t, m]) => {
-        setTrends(t)
-        setMap(m)
+    if (dataProp) return;
+
+    let cancelled = false;
+    setDataLoading(true);
+    setDataError(null);
+
+    fetch(`${API}/api/analytics/map`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Сервер ответил ${res.status}`);
+        return res.json();
       })
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false))
-  }, [])
+      .then((json: MapData) => {
+        if (!cancelled) setData(json);
+      })
+      .catch((err) => {
+        if (!cancelled) setDataError(err.message || "Не удалось загрузить аналитику");
+      })
+      .finally(() => {
+        if (!cancelled) setDataLoading(false);
+      });
 
-  if (loading) return (
-    <div className="space-y-4">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-24 rounded-lg bg-card border border-border animate-pulse" />
-      ))}
-    </div>
-  )
+    return () => {
+      cancelled = true;
+    };
+  }, [dataProp, API]);
 
-  if (error) return (
-    <div className="bg-[#2e1a1a] border border-[#a8453a] rounded-lg p-4 text-[#e05a4e] text-sm">
-      Ошибка загрузки аналитики: {error}
-    </div>
-  )
+  async function handleDistrictClick(district: District) {
+    setSelected(district);
+    setLoading(true);
+    setTenders([]);
+    try {
+      const res = await fetch(
+        `${API}/api/analytics/districts/${encodeURIComponent(district.name)}`
+      );
+      const json = await res.json();
+      setTenders(json.items || []);
+    } catch (e) {
+      console.error("Не удалось загрузить тендеры района:", e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const maxCount = map ? Math.max(...map.districts.map(d => d.tender_count)) : 1
+  function closePanel() {
+    setSelected(null);
+    setTenders([]);
+  }
 
+  // ── Состояние загрузки ──────────────────────
+  if (dataLoading) {
+    return (
+      <div className="rounded-xl border border-border bg-popover p-5">
+        <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+          <Loader2 size={16} className="animate-spin" />
+          Загружаю аналитику по районам...
+        </div>
+      </div>
+    );
+  }
+
+  // ── Состояние ошибки ────────────────────────
+  if (dataError || !data) {
+    return (
+      <div className="rounded-xl border border-border bg-popover p-5">
+        <p className="py-6 text-center text-sm text-crimson">
+          {dataError || "Нет данных для отображения"}
+        </p>
+      </div>
+    );
+  }
+
+  // ── Основной рендер — data гарантированно определена ──
   return (
-    <div className="space-y-6">
-      <h2 className="text-base font-semibold text-foreground">Аналитика рынка</h2>
+    <div className="rounded-xl border border-border bg-popover p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-serif text-lg text-foreground">
+          Тендеры по районам — {data.city}
+        </h3>
+        <span className="text-xs text-muted-foreground">
+          Всего: {data.total_tenders.toLocaleString("ru-RU")}
+        </span>
+      </div>
 
-      {/* Stats cards */}
-      {trends && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-card border border-border rounded-lg p-4">
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Активных тендеров</span>
-            <p className="font-mono text-2xl font-bold text-[#c89b3c] mt-1">{trends.active_tenders_count.toLocaleString("ru")}</p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {data.districts.map((d) => (
+          <button
+            key={d.name}
+            onClick={() => handleDistrictClick(d)}
+            className={`rounded-lg border p-3 text-left transition-all hover:-translate-y-0.5 ${
+              selected?.name === d.name
+                ? "border-primary bg-secondary"
+                : "border-border bg-card hover:border-muted-foreground/40"
+            }`}
+          >
+            <div
+              className="mb-2 h-1.5 w-full rounded-full"
+              style={{
+                backgroundColor: INTENSITY_COLOR[d.intensity],
+                opacity: Number(INTENSITY_OPACITY[d.intensity]),
+              }}
+            />
+            <p className="text-xs font-medium text-foreground leading-tight">{d.name}</p>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              {d.tender_count.toLocaleString("ru-RU")} тендеров
+            </p>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-3 flex gap-4 text-[10px] text-muted-foreground">
+        <LegendDot color={INTENSITY_COLOR.high} label="Высокая активность" />
+        <LegendDot color={INTENSITY_COLOR.medium} label="Средняя" />
+        <LegendDot color={INTENSITY_COLOR.low} label="Низкая" />
+      </div>
+
+      {selected && (
+        <div className="mt-5 rounded-lg border border-border bg-input p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <MapPin size={14} className="text-primary" />
+              <h4 className="text-sm font-semibold text-foreground">
+                {selected.name} район
+              </h4>
+            </div>
+            <button
+              onClick={closePanel}
+              className="text-muted-foreground hover:text-crimson transition-colors"
+            >
+              <X size={16} />
+            </button>
           </div>
-          <div className="bg-card border border-border rounded-lg p-4">
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Снижение цен</span>
-            <p className="font-mono text-2xl font-bold text-[#4caf74] mt-1">−{trends.average_price_drop_percentage}%</p>
-          </div>
-          <div className="bg-card border border-border rounded-lg p-4 col-span-2">
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider block mb-2">Топ категории</span>
-            <div className="flex flex-wrap gap-2">
-              {trends.top_categories.map(cat => (
-                <span
-                  key={cat}
-                  className="px-2 py-0.5 text-xs rounded bg-[#1e3150] text-foreground/80 border border-border"
+
+          {loading && (
+            <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+              <Loader2 size={14} className="animate-spin" />
+              Загружаю тендеры...
+            </div>
+          )}
+
+          {!loading && tenders.length === 0 && (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              В базе пока нет тендеров для этого района.
+            </p>
+          )}
+
+          {!loading && tenders.length > 0 && (
+            <div className="space-y-2">
+              {tenders.map((t) => (
+                <a
+                  key={t.id}
+                  href={t.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-md border border-border bg-popover p-3 transition-colors hover:border-primary"
                 >
-                  {cat}
-                </span>
+                  <p className="text-sm text-foreground line-clamp-2">{t.title}</p>
+                  <p className="mt-1 text-xs text-primary">
+                    {Math.round(t.price).toLocaleString("ru-RU")} ₸
+                  </p>
+                </a>
               ))}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* District map */}
-      {map && (
-        <div className="bg-card border border-border rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider">
-              Районы — {map.city}
-            </span>
-            <span className="font-mono text-xs text-muted-foreground">
-              Всего: {map.total_tenders.toLocaleString("ru")}
-            </span>
-          </div>
-          <div className="space-y-2.5">
-            {map.districts.map(d => {
-              const pct = Math.round((d.tender_count / maxCount) * 100)
-              return (
-                <div key={d.name}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-foreground/80">{d.name}</span>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${INTENSITY_COLORS[d.intensity]} ${d.intensity === "high" ? "text-[#0b1629]" : "text-foreground/70"}`}>
-                        {INTENSITY_LABEL[d.intensity]}
-                      </span>
-                      <span className="font-mono text-[11px] text-muted-foreground w-16 text-right">
-                        {d.tender_count.toLocaleString("ru")}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${INTENSITY_COLORS[d.intensity]}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Бюджет: {formatBudget(d.total_budget_kzt)} ₸
-                  </p>
-                </div>
-              )
-            })}
-          </div>
+          )}
         </div>
       )}
     </div>
-  )
+  );
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-1">
+      <span
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: color }}
+      />
+      {label}
+    </div>
+  );
 }

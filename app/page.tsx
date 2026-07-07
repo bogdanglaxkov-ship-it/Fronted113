@@ -1,222 +1,228 @@
-"use client"
+import Link from "next/link";
+import {
+  ArrowRight,
+  Banknote,
+  Bot,
+  Check,
+  Compass,
+  Landmark,
+  Search,
+  X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-import { useState, useEffect, useRef, useCallback } from "react"
-import { searchTenders, getTenders } from "@/lib/api"
-import type { Tender, TenderFilters } from "@/lib/api"
+const MARKET_STATS = [
+  { value: "77 654", label: "лотов в открытых закупках РК" },
+  { value: "659 726", label: "пользователей на goszakup.gov.kz" },
+  { value: "650 млрд ₸", label: "оборот закупок за год" },
+  { value: "600 000+", label: "компаний в реестрах контрагентов" },
+];
 
-import FilterPanel from "@/components/FilterPanel"
-import TenderCard from "@/components/TenderCard"
-import TenderModal from "@/components/TenderModal"
-import ChatPanel, { type ChatPanelHandle } from "@/components/ChatPanel"
-import AnalyticsDashboard from "@/components/AnalyticsDashboard"
-import MarginCalculator from "@/components/MarginCalculator"
+const PAIN_POINTS = [
+  {
+    icon: Landmark,
+    title: "Госпортал объясняет регламент, а не выгоду",
+    body: "Реестры и отчётность в порядке, но новичку никто не скажет, зачем ему конкретный лот.",
+  },
+  {
+    icon: Banknote,
+    title: "Агрегаторы берут деньги за то, что и так открыто",
+    body: "Удобный интерфейс — поверх тех же бесплатных данных, только теперь по подписке.",
+  },
+  {
+    icon: Compass,
+    title: "Сильный продукт без единой подсказки, с чего начать",
+    body: "Интеграции есть, а трёх понятных шагов для первого входа — нет.",
+  },
+];
 
-const PAGE_SIZE = 20
+const COMPARISON_ROWS = [
+  { label: "Стоимость", tenderai: "Бесплатно", portal: "Бесплатно", agregator: "Платная подписка" },
+  { label: "Онбординг новичка", tenderai: "3 шага", portal: "Слабый", agregator: "Обычно сильный" },
+  { label: "Расчёт маржи ИИ", tenderai: true, portal: false, agregator: false },
+  { label: "Тон коммуникации", tenderai: "Понятный", portal: "Бюрократический", agregator: "Продающий" },
+];
 
-type Tab = "tenders" | "analytics" | "calculator"
+const STEPS = [
+  {
+    n: "01",
+    title: "Регистрация — 30 секунд",
+    body: "Только email и пароль. Без звонка менеджеру и без банковской карты.",
+  },
+  {
+    n: "02",
+    title: "Настройте фильтры",
+    body: "Регион, отрасль, бюджет — Oylan будет искать по вашим критериям.",
+  },
+  {
+    n: "03",
+    title: "Получайте лоты с расчётом маржи",
+    body: "Oylan отбирает подходящие тендеры и сразу считает вашу потенциальную прибыль.",
+  },
+];
 
-export default function TenderAIPage() {
-  const [tab, setTab] = useState<Tab>("tenders")
-  const [tenders, setTenders] = useState<Tender[]>([])
-  const [allTenders, setAllTenders] = useState<Tender[]>([])
-  const [filters, setFilters] = useState<TenderFilters>({})
-  const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const [selectedTender, setSelectedTender] = useState<Tender | null>(null)
-  const [chatOpen, setChatOpen] = useState(false)
-  const chatRef = useRef<ChatPanelHandle>(null)
-
-  // Load all tenders initially
-  useEffect(() => {
-    setLoading(true)
-    getTenders()
-      .then(data => {
-        setAllTenders(data.items)
-        setTenders(data.items)
-      })
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false))
-  }, [])
-
-  // Search/filter on change (debounced)
-  useEffect(() => {
-    const isEmpty = !filters.keyword && !filters.region && !filters.price_min && !filters.price_max
-    if (isEmpty) {
-      setTenders(allTenders)
-      setPage(1)
-      return
-    }
-    const timer = setTimeout(() => {
-      setLoading(true)
-      searchTenders(filters)
-        .then(data => {
-          setTenders(data.items)
-          setPage(1)
-        })
-        .catch(e => setError(e.message))
-        .finally(() => setLoading(false))
-    }, 400)
-    return () => clearTimeout(timer)
-  }, [filters, allTenders])
-
-  const paginated = tenders.slice(0, page * PAGE_SIZE)
-  const hasMore = paginated.length < tenders.length
-
-  function openChat(msg?: string) {
-    setChatOpen(true)
-    if (msg) {
-      setTimeout(() => chatRef.current?.sendMessage(msg), 300)
-    }
-  }
-
-  const TABS: { key: Tab; label: string }[] = [
-    { key: "tenders", label: "Тендеры" },
-    { key: "analytics", label: "Аналитика" },
-    { key: "calculator", label: "Калькулятор" },
-  ]
-
+export default function LandingPage() {
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background">
-      {/* ── Navbar ── */}
-      <header className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border bg-card">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-7 h-7 rounded-md bg-[#c89b3c] flex items-center justify-center">
-              <svg className="w-4 h-4 text-[#0b1629]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-              </svg>
+    <div className="flex flex-col gap-24 pb-16">
+      {/* Hero */}
+      <section className="relative isolate pt-8 sm:pt-14">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-[radial-gradient(60%_55%_at_50%_0%,rgba(41,82,227,0.12),transparent)]"
+        />
+        <div className="grid items-center gap-12 lg:grid-cols-[1.1fr,0.9fr]">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 font-mono text-[11px] tracking-widest text-primary uppercase">
+              Открытые закупки РК · ИИ-анализ
+            </span>
+
+            <h1 className="mt-5 text-4xl leading-[1.1] font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+              Пока порталы объясняют регламент,{" "}
+              <span className="text-primary">TenderAI помогает быстро найти любой тендер.</span>
+            </h1>
+
+            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
+              TenderAI собирает лоты из открытых реестров госзакупок, а ИИ-ассистент Oylan за секунды
+              находит те, что вам выгодны — и сразу считает прибыль.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link href="/register">
+                <Button size="lg" className="gap-2 px-5 text-[0.95rem]">
+                  Начать бесплатно
+                  <ArrowRight size={16} />
+                </Button>
+              </Link>
+              <Link href="/tenders">
+                <Button size="lg" variant="outline" className="gap-2 px-5 text-[0.95rem]">
+                  <Search size={16} />
+                  Смотреть тендеры
+                </Button>
+              </Link>
             </div>
-            <span className="font-semibold text-sm text-foreground tracking-wide">TenderAI</span>
+
+            <p className="mt-4 font-mono text-xs tracking-wide text-muted-foreground">
+              Бесплатно, без банковской карты · Данные — из открытых реестров госзакупок
+            </p>
           </div>
 
-          {/* Tabs */}
-          <nav className="hidden sm:flex items-center gap-1 ml-4">
-            {TABS.map(t => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  tab === t.key
-                    ? "bg-[#1e3150] text-[#c89b3c] font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </nav>
+        </div>
+      </section>
+
+      {/* Market stats */}
+      <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+        <p className="mb-4 font-mono text-xs tracking-widest text-muted-foreground uppercase">
+          Рынок, в котором мы наводим порядок
+        </p>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {MARKET_STATS.map((s) => (
+            <div key={s.label} className="rounded-xl border border-border border-t-2 border-t-primary/50 bg-card p-5">
+              <div className="font-mono text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{s.value}</div>
+              <div className="mt-1 text-sm text-muted-foreground">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Pain points */}
+      <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Почему искать тендеры до сих пор больно
+        </h2>
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          {PAIN_POINTS.map((p) => (
+            <div key={p.title} className="rounded-xl border border-border bg-card p-6">
+              <p.icon size={22} className="text-primary" />
+              <h3 className="mt-4 font-semibold text-foreground">{p.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{p.body}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Chat toggle */}
-        <button
-          onClick={() => setChatOpen(v => !v)}
-          className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-            chatOpen
-              ? "border-[#c89b3c] text-[#c89b3c] bg-[#2a2010]"
-              : "border-border text-muted-foreground hover:border-[#c89b3c44] hover:text-foreground"
-          }`}
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-          </svg>
-          <span className="hidden sm:inline">Oylan AI</span>
-        </button>
-      </header>
+        {/* Comparison table */}
+        <div className="mt-8 overflow-x-auto rounded-xl border border-border bg-card">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead>
+              <tr className="border-b border-border text-left">
+                <th className="px-5 py-3 font-medium text-muted-foreground">Критерий</th>
+                <th className="px-5 py-3 font-semibold text-primary">TenderAI</th>
+                <th className="px-5 py-3 font-medium text-muted-foreground">Гос. портал</th>
+                <th className="px-5 py-3 font-medium text-muted-foreground">Платные агрегаторы</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARISON_ROWS.map((row, i) => (
+                <tr key={row.label} className={i !== COMPARISON_ROWS.length - 1 ? "border-b border-border" : ""}>
+                  <td className="px-5 py-3 text-muted-foreground">{row.label}</td>
+                  <td className="px-5 py-3 font-medium text-foreground">
+                    {typeof row.tenderai === "boolean" ? (
+                      row.tenderai ? <Check size={16} className="text-emerald" /> : <X size={16} className="text-muted-foreground" />
+                    ) : (
+                      row.tenderai
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {typeof row.portal === "boolean" ? (
+                      row.portal ? <Check size={16} className="text-emerald" /> : <X size={16} className="text-muted-foreground" />
+                    ) : (
+                      row.portal
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {typeof row.agregator === "boolean" ? (
+                      row.agregator ? <Check size={16} className="text-emerald" /> : <X size={16} className="text-muted-foreground" />
+                    ) : (
+                      row.agregator
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-      {/* Mobile tabs */}
-      <div className="sm:hidden flex border-b border-border shrink-0">
-        {TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex-1 py-2 text-xs font-medium transition-colors ${
-              tab === t.key
-                ? "text-[#c89b3c] border-b-2 border-[#c89b3c]"
-                : "text-muted-foreground"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Main layout ── */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Content area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {tab === "tenders" && (
-            <>
-              <FilterPanel
-                filters={filters}
-                onChange={setFilters}
-                totalFound={tenders.length}
-                totalAll={allTenders.length}
-              />
-
-              {error && (
-                <div className="mb-4 bg-[#2e1a1a] border border-[#a8453a] rounded-lg p-3 text-[#e05a4e] text-sm">
-                  {error} — убедитесь, что бэкенд запущен и NEXT_PUBLIC_API_URL указан верно.
-                </div>
-              )}
-
-              {loading && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="h-40 rounded-lg bg-card border border-border animate-pulse" />
-                  ))}
-                </div>
-              )}
-
-              {!loading && tenders.length === 0 && !error && (
-                <div className="text-center py-16 text-muted-foreground text-sm">
-                  Тендеры не найдены. Попробуйте изменить фильтры.
-                </div>
-              )}
-
-              {!loading && tenders.length > 0 && (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {paginated.map(t => (
-                      <TenderCard key={t.id} tender={t} onClick={setSelectedTender} />
-                    ))}
-                  </div>
-
-                  {hasMore && (
-                    <div className="mt-6 text-center">
-                      <button
-                        onClick={() => setPage(p => p + 1)}
-                        className="px-6 py-2 text-sm border border-border rounded-lg text-muted-foreground hover:border-[#c89b3c44] hover:text-foreground transition-colors"
-                      >
-                        Загрузить ещё ({tenders.length - paginated.length} осталось)
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
-
-          {tab === "analytics" && <AnalyticsDashboard />}
-
-          {tab === "calculator" && (
-            <div className="max-w-md">
-              <MarginCalculator />
+      {/* 3-step onboarding */}
+      <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Начать — 3 шага</h2>
+        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          {STEPS.map((step) => (
+            <div key={step.n} className="relative rounded-xl border border-border bg-card p-6">
+              <span className="font-mono text-3xl font-bold text-primary/25">{step.n}</span>
+              <h3 className="mt-3 font-semibold text-foreground">{step.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{step.body}</p>
             </div>
-          )}
-        </main>
+          ))}
+        </div>
+        <div className="mt-8">
+          <Link href="/register">
+            <Button size="lg" className="gap-2 px-5 text-[0.95rem]">
+              Зарегистрироваться
+              <ArrowRight size={16} />
+            </Button>
+          </Link>
+        </div>
+      </section>
 
-        {/* Chat panel */}
-        <ChatPanel ref={chatRef} open={chatOpen} onClose={() => setChatOpen(false)} />
-      </div>
-
-      {/* Tender detail modal */}
-      <TenderModal
-        tender={selectedTender}
-        onClose={() => setSelectedTender(null)}
-        onOpenChat={(msg) => openChat(msg)}
-      />
+      {/* Final CTA band */}
+      <section className="relative isolate">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-[radial-gradient(50%_100%_at_50%_50%,rgba(76,175,116,0.10),transparent)]"
+        />
+        <div className="flex flex-col items-center gap-5 rounded-2xl border border-border bg-card px-6 py-14 text-center">
+          <Bot size={28} className="text-primary" />
+          <h2 className="max-w-xl text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Хватит платить за то, что и так в открытом доступе.
+          </h2>
+          <Link href="/register">
+            <Button size="lg" className="gap-2 px-6 text-[0.95rem]">
+              Начать бесплатно
+              <ArrowRight size={16} />
+            </Button>
+          </Link>
+        </div>
+      </section>
     </div>
-  )
+  );
 }
