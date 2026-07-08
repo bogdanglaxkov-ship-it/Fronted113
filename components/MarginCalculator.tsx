@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { Scale, TrendingUp, TrendingDown, Sparkles, Loader2, X } from "lucide-react";
 import { API_URL } from "@/lib/api";

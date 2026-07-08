@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Plus, Check } from "lucide-react";
 import type { Tender } from "@/lib/api";
 import { useCalculator } from "@/lib/calculator-store";
+import { formatPrice } from "@/lib/format";
 import { toast } from "sonner";
 const STATUS_CONFIG = {
   active: { label: "АКТИВНЫЙ", text: "text-emerald", border: "border-emerald", bg: "bg-emerald/15" },
@@ -11,14 +12,6 @@ const STATUS_CONFIG = {
   canceled: { label: "ОТМЕНЁН", text: "text-crimson", border: "border-crimson", bg: "bg-crimson/15" },
   paused: { label: "НА ПАУЗЕ", text: "text-primary", border: "border-primary", bg: "bg-gold-muted" },
 } as const;
-function formatPrice(price?: number) {
-  if (!price) return "—";
-  return new Intl.NumberFormat("ru-KZ", {
-    style: "currency",
-    currency: "KZT",
-    maximumFractionDigits: 0,
-  }).format(price);
-}
 interface Props {
   tender: Tender | null;
   onClose: () => void;

@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { MapPin, Loader2, X, ChevronRight } from "lucide-react";
 import { fetchTenders, type Tender } from "@/lib/api";
 import { KAZAKHSTAN_REGIONS, ALMATY_DISTRICTS } from "@/lib/regions";
+import { fmtKzt } from "@/lib/format";
 type Intensity = "high" | "medium" | "low";
 interface RegionAgg {
   name: string;
@@ -18,15 +20,11 @@ const INTENSITY_COLOR: Record<Intensity, string> = {
   medium: "var(--gold)",
   low: "var(--gold-muted)",
 };
-function fmtKzt(n: number) {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)} млрд ₸`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} млн ₸`;
-  return `${Math.round(n).toLocaleString("ru-RU")} ₸`;
-}
 export default function AnalyticsRegions() {
+  const searchParams = useSearchParams();
   const [tenders, setTenders] = useState<Tender[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(searchParams.get("region"));
   useEffect(() => {
     let cancelled = false;
     fetchTenders()

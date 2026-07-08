@@ -27,8 +27,11 @@ export interface TenderFilters {
   price_max: number | null;
   keyword: string | null;
 }
-export async function fetchTenders(): Promise<Tender[]> {
-  const res = await fetch(`${API_URL}/api/tenders`, { cache: "no-store" });
+export type TenderSource = "goszakup" | "samruk" | "tenderplan";
+
+export async function fetchTenders(source?: TenderSource): Promise<Tender[]> {
+  const url = source ? `${API_URL}/api/tenders?source=${source}` : `${API_URL}/api/tenders`;
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Сервер ответил ${res.status}`);
   const data = await res.json();
   return (data.items ?? []) as Tender[];
@@ -81,4 +84,26 @@ export function forgotPassword(email: string) {
 }
 export function resetPassword(token: string, password: string) {
   return postAuth("reset-password", { token, password });
+}
+
+export interface McpKeyResponse {
+  server_url: string;
+  key: string;
+}
+
+export async function getMcpKey(authToken: string): Promise<McpKeyResponse> {
+  const res = await fetch(`${API_URL}/api/mcp/key`, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  if (!res.ok) throw new Error(`Сервер ответил ${res.status}`);
+  return res.json();
+}
+
+export async function rotateMcpKey(authToken: string): Promise<McpKeyResponse> {
+  const res = await fetch(`${API_URL}/api/mcp/key/rotate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  if (!res.ok) throw new Error(`Сервер ответил ${res.status}`);
+  return res.json();
 }

@@ -9,26 +9,16 @@ export interface CalcTender {
   other_costs: number;
 }
 interface CalculatorState {
-  open: boolean;
   items: CalcTender[];
-  openModal: () => void;
-  closeModal: () => void;
-  toggleModal: () => void;
   add: (t: CalcTender) => void;
   remove: (id: string) => void;
   clear: () => void;
 }
-export const useCalculator = create<CalculatorState>((set, get) => ({
-  open: false,
+export const useCalculator = create<CalculatorState>((set) => ({
   items: [],
-  openModal: () => set({ open: true }),
-  closeModal: () => set({ open: false }),
-  toggleModal: () => set({ open: !get().open }),
   add: (t) =>
     set((s) =>
-      s.items.find((x) => x.id === t.id)
-        ? { ...s, open: true }
-        : { items: [...s.items, t].slice(-5), open: true },
+      s.items.find((x) => x.id === t.id) ? s : { items: [...s.items, t].slice(-5) },
     ),
   remove: (id) => set((s) => ({ items: s.items.filter((x) => x.id !== id) })),
   clear: () => set({ items: [] }),

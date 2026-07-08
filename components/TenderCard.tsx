@@ -1,30 +1,30 @@
-import { Plus, Check } from "lucide-react";
+import { Bookmark, Check, ExternalLink, MapPin, Clock, Users, TrendingUp } from "lucide-react";
 import type { Tender } from "@/lib/api";
 import { useCalculator } from "@/lib/calculator-store";
+import { formatPrice, pseudoMargin } from "@/lib/format";
+import { LOT_TYPE_CONFIG, classifyLotType } from "@/lib/lot-type";
 import { toast } from "sonner";
+
 const STATUS_CONFIG = {
   active: { label: "АКТИВНЫЙ", bg: "bg-emerald/15", text: "text-emerald", border: "border-emerald" },
   completed: { label: "ЗАВЕРШЁН", bg: "bg-paused/15", text: "text-paused", border: "border-paused" },
   canceled: { label: "ОТМЕНЁН", bg: "bg-crimson/15", text: "text-crimson", border: "border-crimson" },
   paused: { label: "НА ПАУЗЕ", bg: "bg-gold-muted", text: "text-primary", border: "border-primary" },
 } as const;
-function formatPrice(price?: number) {
-  if (!price) return "—";
-  return new Intl.NumberFormat("ru-KZ", {
-    style: "currency",
-    currency: "KZT",
-    maximumFractionDigits: 0,
-  }).format(price);
-}
+
 interface Props {
   tender: Tender;
   onClick: (t: Tender) => void;
 }
+
 export default function TenderCard({ tender, onClick }: Props) {
   const s = STATUS_CONFIG[tender.status] ?? STATUS_CONFIG.completed;
+  const lotType = LOT_TYPE_CONFIG[classifyLotType(tender.title)];
+  const margin = pseudoMargin(tender.id + tender.title);
   const add = useCalculator((st) => st.add);
   const inCalc = useCalculator((st) => st.items.some((x) => x.id === tender.id));
-  function handleAdd(e: React.MouseEvent) {
+
+  function handleBookmark(e: React.MouseEvent) {
     e.stopPropagation();
     if (inCalc) return;
     add({
@@ -37,80 +37,96 @@ export default function TenderCard({ tender, onClick }: Props) {
     });
     toast.success("Добавлено в калькулятор");
   }
+
   return (
     <div
       onClick={() => onClick(tender)}
-      className="cursor-pointer bg-card border border-border rounded-lg p-4 hover:border-primary/40 hover:bg-accent transition-all duration-150 group"
+      className="group flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-card p-4 transition-all duration-150 hover:border-primary/40 hover:bg-accent"
     >
-      <div className="flex items-start justify-between gap-3 mb-2">
-        {tender.keyword && (
-          <span className="font-mono text-[11px] text-muted-foreground tracking-widest shrink-0 uppercase truncate">
-            {tender.keyword}
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${lotType.bg}`}>
+        <lotType.icon size={18} className={lotType.text} />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+          <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold tracking-wider ${lotType.bg} ${lotType.text}`}>
+            {lotType.label}
           </span>
+          <span
+            className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-bold tracking-wider ${s.bg} ${s.text} ${s.border}`}
+          >
+            {s.label}
+          </span>
+          {tender.keyword && (
+            <span className="truncate font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              {tender.keyword}
+            </span>
+          )}
+        </div>
+
+        <h3 className="mb-1.5 line-clamp-2 text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
+          {tender.title}
+        </h3>
+
+        {tender.organization && (
+          <p className="mb-1.5 truncate text-xs text-foreground/70">{tender.organization}</p>
         )}
-        <span
-          className={`ml-auto inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wider border ${s.bg} ${s.text} ${s.border} shrink-0`}
-        >
-          {s.label}
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          {tender.region && (
+            <span className="flex items-center gap-1">
+              <MapPin size={11} />
+              {tender.region}
+              {tender.district ? `, ${tender.district}` : ""}
+            </span>
+          )}
+          {tender.deadline && (
+            <span className="flex items-center gap-1 text-crimson">
+              <Clock size={11} />
+              {tender.deadline}
+            </span>
+          )}
+          {typeof tender.participants === "number" && (
+            <span className="flex items-center gap-1">
+              <Users size={11} />
+              {tender.participants} уч.
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex shrink-0 flex-col items-end gap-2">
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleBookmark}
+            aria-label={inCalc ? "В калькуляторе" : "В калькулятор"}
+            className={`flex h-7 w-7 items-center justify-center rounded-md border transition-colors ${
+              inCalc
+                ? "border-emerald/40 text-emerald"
+                : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+            }`}
+          >
+            {inCalc ? <Check size={13} /> : <Bookmark size={13} />}
+          </button>
+          {tender.url && (
+            <a
+              href={tender.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Открыть источник"
+              className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              <ExternalLink size={13} />
+            </a>
+          )}
+        </div>
+        <p className="whitespace-nowrap font-mono text-sm font-semibold text-foreground">{formatPrice(tender.price)}</p>
+        <span className="flex items-center gap-0.5 text-[11px] font-medium text-emerald">
+          <TrendingUp size={11} />
+          Маржа {margin}%
         </span>
       </div>
-      <h3 className="text-foreground text-sm font-semibold leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
-        {tender.title}
-      </h3>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3">
-        {tender.organization && (
-          <div className="col-span-2">
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Компания</span>
-            <p className="text-xs text-foreground/85 truncate">{tender.organization}</p>
-          </div>
-        )}
-        <div>
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Цена</span>
-          <p className="font-mono text-sm font-semibold text-primary">{formatPrice(tender.price)}</p>
-        </div>
-        {tender.region && (
-          <div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Город</span>
-            <p className="text-xs text-foreground/85">{tender.region}</p>
-          </div>
-        )}
-        {tender.district && (
-          <div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Район</span>
-            <p className="text-xs text-foreground/85">{tender.district}</p>
-          </div>
-        )}
-        {tender.deadline && (
-          <div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Дедлайн</span>
-            <p className="font-mono text-xs text-foreground/70">{tender.deadline}</p>
-          </div>
-        )}
-        {tender.published_at && (
-          <div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Публикация</span>
-            <p className="font-mono text-xs text-foreground/70">{tender.published_at}</p>
-          </div>
-        )}
-        {typeof tender.participants === "number" && (
-          <div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Участники</span>
-            <p className="text-xs text-foreground/85">{tender.participants}</p>
-          </div>
-        )}
-      </div>
-      <button
-        onClick={handleAdd}
-        disabled={inCalc}
-        className={`mt-3 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
-          inCalc
-            ? "border-emerald/40 text-emerald cursor-default"
-            : "border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-        }`}
-      >
-        {inCalc ? <Check size={12} /> : <Plus size={12} />}
-        {inCalc ? "В калькуляторе" : "В калькулятор"}
-      </button>
     </div>
   );
 }
