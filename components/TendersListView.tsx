@@ -72,16 +72,16 @@ export default function TendersListView({ source }: { source: TenderSource }) {
     <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
       <FilterPanel allItems={allItems ?? EMPTY_ITEMS} onFiltersChange={setFilters} />
       <div>
-        <div ref={listTopRef} className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            {visible ? `Найдено: ${displayCount.toLocaleString("ru-RU")}` : "Загрузка..."}
+        <div ref={listTopRef} className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="font-serif text-xl text-foreground">
+            {visible ? `Найдено ${displayCount.toLocaleString("ru-RU")} лотов` : "Загрузка..."}
           </p>
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <ArrowDownWideNarrow size={14} />
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}
-              className="rounded-md border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+              className="rounded-lg border border-border bg-input px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary"
             >
               <option value="price_desc">По сумме (убыв.)</option>
               <option value="price_asc">По сумме (возр.)</option>

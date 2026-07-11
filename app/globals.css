@@ -41,6 +41,7 @@
 
 :root {
   color-scheme: light;
+  --radius: 0.75rem;
 
   /* Paper backgrounds — white/blue/black (default theme) */
   --background:           #ffffff;
@@ -87,51 +88,53 @@
 .dark {
   color-scheme: dark;
 
-  /* Night backgrounds (toggle theme) */
-  --background:           #0b0f1a;
-  --foreground:           #eef1f7;
+  /* Stitch "TenderAI Design System" — Precision Minimalism obsidian palette */
+  --background:           #0a0a0a;
+  --foreground:           #ffffff;
 
-  --card:                 #121729;
-  --card-foreground:      #eef1f7;
+  --card:                 #121212;
+  --card-foreground:      #ffffff;
 
-  --popover:              #0d1120;
-  --popover-foreground:   #eef1f7;
+  --popover:              #161616;
+  --popover-foreground:   #ffffff;
 
-  /* Primary — royal blue accent (unchanged, works on both) */
-  --primary:              #4f74ff;
-  --primary-foreground:   #ffffff;
+  /* Primary — mint accent */
+  --primary:              #00d9a0;
+  --primary-foreground:   #0a0a0a;
 
   /* Secondary panels */
-  --secondary:            #1a2036;
-  --secondary-foreground: #eef1f7;
+  --secondary:            #161616;
+  --secondary-foreground: #ffffff;
 
   /* Muted */
-  --muted:                #1c2338;
-  --muted-foreground:     #98a2b8;
+  --muted:                #121212;
+  --muted-foreground:     #9ca3af;
 
   /* Accent */
-  --accent:               #1c2338;
-  --accent-foreground:    #4f74ff;
+  --accent:               #1f1f1f;
+  --accent-foreground:    #00d9a0;
 
   /* Destructive */
-  --destructive:          #ef4444;
+  --destructive:          #e5484d;
 
-  /* Borders & inputs */
-  --border:               #232a45;
-  --input:                #121729;
-  --ring:                 #4f74ff;
+  /* Borders & inputs — 1px "blueprint" borders, no shadows */
+  --border:               #1f1f1f;
+  --input:                #0a0a0a;
+  --ring:                 #4f6bff;
 
   /* Status colors */
-  --gold:                 #4f74ff;
-  --gold-muted:           #1a2036;
-  --emerald:              #22c55e;
-  --crimson:              #ef4444;
+  --gold:                 #f5a623;
+  --gold-muted:           #1f1f1f;
+  --emerald:              #00d9a0;
+  --crimson:              #e5484d;
   --paused:               #7b8496;
+
+  --radius: 10px;
 }
 
-.dark ::-webkit-scrollbar-track { background: #0b0f1a; }
-.dark ::-webkit-scrollbar-thumb { background: #232a45; }
-.dark ::-webkit-scrollbar-thumb:hover { background: #4f74ff44; }
+.dark ::-webkit-scrollbar-track { background: #0a0a0a; }
+.dark ::-webkit-scrollbar-thumb { background: #1f1f1f; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #00d9a044; }
 
 @layer base {
   * {

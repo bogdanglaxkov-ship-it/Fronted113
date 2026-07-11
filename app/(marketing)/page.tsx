@@ -62,66 +62,71 @@ const STEPS = [
 ];
 
 export default function LandingPage() {
+  const updatedAt = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+
   return (
     <div className="flex flex-col gap-24 pb-16">
       {/* Hero */}
       <section className="relative isolate pt-8 sm:pt-14">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-[radial-gradient(60%_55%_at_50%_0%,rgba(41,82,227,0.12),transparent)]"
+          className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-[radial-gradient(60%_55%_at_50%_0%,rgba(0,217,160,0.12),transparent)]"
         />
-        <div className="grid items-center gap-12 lg:grid-cols-[1.1fr,0.9fr]">
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 font-mono text-[11px] tracking-widest text-primary uppercase">
-              Открытые закупки РК · ИИ-анализ
-            </span>
+        <div className="mx-auto flex max-w-3xl flex-col items-center text-center animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
+            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            Обновлено {updatedAt}
+          </span>
 
-            <h1 className="mt-5 text-4xl leading-[1.1] font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              Пока порталы объясняют регламент,{" "}
-              <span className="text-primary">TenderAI помогает быстро найти любой тендер.</span>
-            </h1>
+          <h1 className="mt-6 text-4xl leading-[1.1] font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            Аналитика <span className="text-primary">госзакупок</span>
+          </h1>
 
-            <p className="mt-5 max-w-xl text-lg text-muted-foreground">
-              TenderAI собирает лоты из открытых реестров госзакупок, а ИИ-ассистент Oylan за секунды
-              находит те, что вам выгодны — и сразу считает прибыль.
-            </p>
+          <p className="mt-5 max-w-xl text-lg text-muted-foreground">
+            TenderAI собирает лоты из открытых реестров госзакупок, а ИИ-ассистент Oylan за секунды
+            находит те, что вам выгодны — и сразу считает прибыль.
+          </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/register">
-                <Button size="lg" className="gap-2 px-5 text-[0.95rem]">
-                  Начать бесплатно
-                  <ArrowRight size={16} />
-                </Button>
-              </Link>
-              <Link href="/tenders">
-                <Button size="lg" variant="outline" className="gap-2 px-5 text-[0.95rem]">
-                  <Search size={16} />
-                  Смотреть тендеры
-                </Button>
-              </Link>
-            </div>
-
-            <p className="mt-4 font-mono text-xs tracking-wide text-muted-foreground">
-              Бесплатно, без банковской карты · Данные — из открытых реестров госзакупок
-            </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/register">
+              <Button size="lg" className="gap-2 px-5 text-[0.95rem]">
+                Начать бесплатно
+                <ArrowRight size={16} />
+              </Button>
+            </Link>
+            <Link href="/tenders">
+              <Button size="lg" variant="outline" className="gap-2 px-5 text-[0.95rem]">
+                <Search size={16} />
+                Смотреть тендеры
+              </Button>
+            </Link>
           </div>
 
+          <p className="mt-4 font-mono text-xs tracking-wide text-muted-foreground">
+            Бесплатно, без банковской карты · Данные — из открытых реестров госзакупок
+          </p>
         </div>
       </section>
 
-      {/* Market stats */}
-      <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
-        <p className="mb-4 font-mono text-xs tracking-widest text-muted-foreground uppercase">
-          Рынок, в котором мы наводим порядок
-        </p>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {MARKET_STATS.map((s) => (
-            <div key={s.label} className="rounded-xl border border-border border-t-2 border-t-primary/50 bg-card p-5">
-              <div className="font-mono text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{s.value}</div>
-              <div className="mt-1 text-sm text-muted-foreground">{s.label}</div>
+      {/* Live stat row */}
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {MARKET_STATS.map((s, i) => (
+          <div
+            key={s.label}
+            className="flex items-center gap-4 rounded-lg border border-border bg-card/50 p-4 transition-colors hover:bg-card"
+          >
+            <span
+              className={
+                "h-2 w-2 shrink-0 rounded-full " +
+                (i === 0 ? "bg-primary" : i === 1 ? "bg-ring" : i === 2 ? "bg-emerald" : "bg-gold")
+              }
+            />
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</div>
+              <div className="mt-1 font-mono text-lg font-semibold text-foreground">{s.value}</div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </section>
 
       {/* Pain points */}

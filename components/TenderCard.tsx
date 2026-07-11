@@ -41,19 +41,19 @@ export default function TenderCard({ tender, onClick }: Props) {
   return (
     <div
       onClick={() => onClick(tender)}
-      className="group flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-card p-4 transition-all duration-150 hover:border-primary/40 hover:bg-accent"
+      className="group flex cursor-pointer items-start gap-4 rounded-lg border border-border bg-card p-5 transition-all duration-150 hover:border-primary/50"
     >
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${lotType.bg}`}>
-        <lotType.icon size={18} className={lotType.text} />
+      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-border ${lotType.bg}`}>
+        <lotType.icon size={22} className={lotType.text} />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-          <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold tracking-wider ${lotType.bg} ${lotType.text}`}>
+          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider ${lotType.bg} ${lotType.text}`}>
             {lotType.label}
           </span>
           <span
-            className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-bold tracking-wider ${s.bg} ${s.text} ${s.border}`}
+            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-wider ${s.bg} ${s.text} ${s.border}`}
           >
             {s.label}
           </span>
@@ -122,9 +122,9 @@ export default function TenderCard({ tender, onClick }: Props) {
           )}
         </div>
         <p className="whitespace-nowrap font-mono text-sm font-semibold text-foreground">{formatPrice(tender.price)}</p>
-        <span className="flex items-center gap-0.5 text-[11px] font-medium text-emerald">
-          <TrendingUp size={11} />
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald/10 px-2.5 py-1 text-[11px] font-bold text-emerald">
           Маржа {margin}%
+          <TrendingUp size={12} />
         </span>
       </div>
     </div>

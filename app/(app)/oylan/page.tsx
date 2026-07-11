@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Send, Trash2 } from "lucide-react";
+import { Send, Trash2, FileText, BarChart3, Search, Calculator, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-store";
 import { useChat } from "@/lib/chat-store";
 import { useOylanChat } from "@/lib/use-oylan-chat";
 
-const SUGGESTIONS = ["Мои тендеры", "Аналитика", "Найти тендер", "Помощь с расчётом"];
+const SUGGESTIONS = [
+  { label: "Мои тендеры", icon: FileText },
+  { label: "Аналитика", icon: BarChart3 },
+  { label: "Найти тендер", icon: Search },
+  { label: "Помощь с расчётом", icon: Calculator },
+];
 
 export default function OylanPage() {
   const { user, hydrated, hydrate } = useAuth();
@@ -45,12 +50,15 @@ export default function OylanPage() {
     <div className="flex h-[calc(100vh-3rem)] flex-col rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border px-5 py-3.5 shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-            O
+          <div className="relative flex h-8 w-8 items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-md" />
+            <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+              O
+            </div>
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">Oylan AI</p>
-            <p className="text-[11px] text-muted-foreground">Ассистент по тендерам</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Ассистент по тендерам</p>
           </div>
           <span className="ml-1 h-2 w-2 rounded-full bg-emerald animate-pulse" />
         </div>
@@ -65,19 +73,26 @@ export default function OylanPage() {
 
       <div className="flex-1 space-y-3 overflow-y-auto p-5">
         {messages.length === 0 && !loading && (
-          <div className="space-y-4 pt-6 text-center">
-            <p className="text-lg font-semibold text-foreground">
-              Привет{hydrated && user ? `, ${user.name}` : ""}!
-            </p>
-            <p className="text-sm text-muted-foreground">Чем помочь?</p>
-            <div className="mx-auto grid max-w-md gap-2 pt-4 sm:grid-cols-2">
-              {SUGGESTIONS.map((s) => (
+          <div className="space-y-5 pt-6 text-center">
+            <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-primary">
+              <div className="absolute inset-0 rounded-full bg-primary/20 blur-lg animate-pulse" />
+              <Sparkles size={22} className="relative text-primary" />
+            </div>
+            <div>
+              <p className="text-lg font-semibold text-foreground">
+                Привет{hydrated && user ? `, ${user.name}` : ""}!
+              </p>
+              <p className="text-sm text-muted-foreground">Чем помочь?</p>
+            </div>
+            <div className="mx-auto flex max-w-md flex-wrap justify-center gap-2 pt-2">
+              {SUGGESTIONS.map(({ label, icon: Icon }) => (
                 <button
-                  key={s}
-                  onClick={() => void send(s)}
-                  className="rounded-lg border border-border bg-background px-3 py-2.5 text-left text-xs text-foreground/80 hover:border-primary/40 hover:text-primary transition-colors"
+                  key={label}
+                  onClick={() => void send(label)}
+                  className="flex items-center gap-2 rounded-full border border-border bg-background px-3.5 py-2 text-xs text-foreground/80 hover:border-primary/50 hover:text-primary transition-colors"
                 >
-                  {s}
+                  <Icon size={13} />
+                  {label}
                 </button>
               ))}
             </div>
@@ -115,14 +130,14 @@ export default function OylanPage() {
       </div>
 
       <div className="shrink-0 border-t border-border p-4">
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-2 rounded-xl border border-border bg-background px-3 py-2 transition-colors focus-within:border-primary">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKey}
             placeholder="Напишите сообщение..."
             rows={2}
-            className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+            className="flex-1 resize-none border-none bg-transparent py-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
           <button
             onClick={() => {
@@ -135,7 +150,7 @@ export default function OylanPage() {
             <Send size={15} />
           </button>
         </div>
-        <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
+        <p className="mt-2 text-center text-[10px] uppercase tracking-widest text-muted-foreground/70">
           Enter — отправить · Shift+Enter — перенос
         </p>
       </div>

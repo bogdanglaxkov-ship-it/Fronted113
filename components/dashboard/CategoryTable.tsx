@@ -70,12 +70,18 @@ export default function CategoryTable() {
               <span className="truncate text-sm text-foreground">{row.name}</span>
             </div>
           </td>
-          <td className="py-2.5 pr-4 text-sm font-medium text-foreground">{fmtKzt(row.volume)}</td>
+          <td className="py-2.5 pr-4">
+            <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground">{fmtKzt(row.volume)}</span>
+          </td>
           <td className="py-2.5 pr-4 text-sm text-foreground">{row.count.toLocaleString("ru-RU")}</td>
-          <td className="py-2.5 pr-4 text-sm font-medium text-gold">{row.marginPct.toFixed(1)}%</td>
+          <td className="py-2.5 pr-4">
+            <span className="rounded bg-accent px-2 py-0.5 text-xs font-medium text-gold">{row.marginPct.toFixed(1)}%</span>
+          </td>
           <td className="py-2.5 pr-4 text-sm text-foreground">{fmtKzt(row.profit)}</td>
           <td className="py-2.5 pr-4 text-sm text-foreground">{fmtKzt(row.avgPrice)}</td>
-          <td className="py-2.5 text-sm font-medium text-emerald">{row.competitionRatio.toFixed(2)}</td>
+          <td className="py-2.5">
+            <span className="rounded bg-accent px-2 py-0.5 text-xs font-medium text-emerald">{row.competitionRatio.toFixed(2)}</span>
+          </td>
         </tr>
         {hasChildren &&
           isOpen &&
@@ -85,7 +91,7 @@ export default function CategoryTable() {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-popover p-5">
+    <div className="rounded-lg border border-border bg-card p-5">
       <h3 className="mb-4 font-serif text-lg text-foreground">Аналитика категорий</h3>
       <div className="mb-4 flex gap-1 border-b border-border">
         {TABS.map((t) => (
@@ -105,7 +111,7 @@ export default function CategoryTable() {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] border-collapse">
           <thead>
-            <tr className="border-b border-border text-left">
+            <tr className="border-b border-border bg-muted/40 text-left">
               <th className="pb-2 pr-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Категория / Подкатегория
               </th>

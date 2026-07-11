@@ -118,7 +118,7 @@ export default function FilterPanel({ allItems, onFiltersChange }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-popover p-5">
+    <div className="rounded-xl border border-border bg-card p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-serif text-lg text-foreground">Фильтры</h3>
         {hasActiveFilters && (

@@ -14,12 +14,16 @@ export default function StatCard({ label, stat, format }: Props) {
   const deltaPct = first ? ((last - first) / first) * 100 : 0;
   const positive = deltaPct >= 0;
   const color = positive ? "var(--emerald)" : "var(--crimson)";
+  const TrendIcon = positive ? TrendingUp : TrendingDown;
 
   return (
-    <div className="rounded-xl border border-border bg-popover p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
-      <div className="mt-3 flex items-end justify-between gap-3">
-        <p className="text-2xl font-bold text-foreground">{format(stat.value)}</p>
+    <div className="group rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary/50">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+        <TrendIcon size={16} className={positive ? "text-primary" : "text-crimson"} />
+      </div>
+      <p className="mt-4 text-2xl font-bold text-foreground">{format(stat.value)}</p>
+      <div className="mt-4">
         <Sparkline data={stat.series} color={color} />
       </div>
       <p

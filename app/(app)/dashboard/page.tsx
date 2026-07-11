@@ -8,7 +8,8 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-2xl text-foreground">Ключевые показатели за 24 часа</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
           Обновлено {new Date().toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
         </p>
       </div>
