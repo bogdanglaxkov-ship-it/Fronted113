@@ -47,6 +47,72 @@ export async function searchTenders(filters: TenderFilters): Promise<Tender[]> {
   return (data.items ?? data.results ?? []) as Tender[];
 }
 
+export interface LotDocument {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface LotDetail {
+  id: string;
+  title: string;
+  description: string;
+  lot_number: string;
+  type: string;
+  category: string;
+  subcategory: string;
+  customer: string;
+  customer_rating: number;
+  region?: string | null;
+  deadline_text: string;
+  status_label: string;
+  purchase_method: string;
+  trade_type: string;
+  amount: number;
+  quantity: number;
+  price_per_unit: number;
+  margin_percent: number;
+  profit: number;
+  competition: number;
+  dumping_percent: number;
+  source_url?: string | null;
+  documents: LotDocument[];
+  shared_documents: LotDocument[];
+}
+
+export async function fetchTenderDetail(id: string): Promise<LotDetail> {
+  const res = await fetch(`${API_URL}/api/tenders/${encodeURIComponent(id)}/detail`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Сервер ответил ${res.status}`);
+  return res.json();
+}
+
+export async function fetchRelatedTenders(id: string): Promise<Tender[]> {
+  const res = await fetch(`${API_URL}/api/tenders/${encodeURIComponent(id)}/related`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Сервер ответил ${res.status}`);
+  const data = await res.json();
+  return (data.items ?? []) as Tender[];
+}
+
+export function lotDocumentUrl(tenderId: string, docId: string): string {
+  return `${API_URL}/api/tenders/${encodeURIComponent(tenderId)}/documents/${encodeURIComponent(docId)}`;
+}
+
+export interface MarginResult {
+  pure_profit_kzt: number;
+  margin_percentage: number;
+  roi: string;
+}
+
+export async function calculateMargin(tender_price: number, my_cost: number): Promise<MarginResult> {
+  const res = await fetch(`${API_URL}/api/calculator/margin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tender_price, my_cost }),
+  });
+  if (!res.ok) throw new Error(`Сервер ответил ${res.status}`);
+  return res.json();
+}
+
 export interface AuthUser {
   id: string;
   email: string;

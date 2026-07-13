@@ -14,7 +14,7 @@ interface ChatAction {
   tender: { id: string; title: string; tender_price: number };
 }
 
-export function useOylanChat(sessionId: string) {
+export function useOylanChat(sessionId: string, tenderId?: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -40,7 +40,7 @@ export function useOylanChat(sessionId: string) {
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg, session_id: sessionId }),
+        body: JSON.stringify({ message: msg, session_id: sessionId, tender_id: tenderId }),
       });
       const data = await res.json();
       const action = data.action as ChatAction | null | undefined;

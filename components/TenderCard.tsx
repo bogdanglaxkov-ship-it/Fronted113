@@ -1,4 +1,5 @@
-import { Bookmark, Check, ExternalLink, MapPin, Clock, Users, TrendingUp } from "lucide-react";
+import { Bookmark, Check, ArrowUpRight, MapPin, Clock, Users, TrendingUp } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { Tender } from "@/lib/api";
 import { useCalculator } from "@/lib/calculator-store";
 import { formatPrice, pseudoMargin } from "@/lib/format";
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function TenderCard({ tender, onClick }: Props) {
+  const router = useRouter();
   const s = STATUS_CONFIG[tender.status] ?? STATUS_CONFIG.completed;
   const lotType = LOT_TYPE_CONFIG[classifyLotType(tender.title)];
   const margin = pseudoMargin(tender.id + tender.title);
@@ -36,6 +38,11 @@ export default function TenderCard({ tender, onClick }: Props) {
       other_costs: 0,
     });
     toast.success("Добавлено в калькулятор");
+  }
+
+  function handleOpenLot(e: React.MouseEvent) {
+    e.stopPropagation();
+    router.push(`/tenders/${tender.id}`);
   }
 
   return (
@@ -108,18 +115,18 @@ export default function TenderCard({ tender, onClick }: Props) {
           >
             {inCalc ? <Check size={13} /> : <Bookmark size={13} />}
           </button>
-          {tender.url && (
-            <a
-              href={tender.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              aria-label="Открыть источник"
+          <div className="group/tooltip relative">
+            <button
+              onClick={handleOpenLot}
+              aria-label="Открыть лот"
               className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
             >
-              <ExternalLink size={13} />
-            </a>
-          )}
+              <ArrowUpRight size={13} />
+            </button>
+            <span className="pointer-events-none absolute right-0 top-full z-10 mt-1.5 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-[11px] font-medium text-background opacity-0 shadow-lg transition-opacity duration-150 group-hover/tooltip:opacity-100">
+              Открыть лот
+            </span>
+          </div>
         </div>
         <p className="whitespace-nowrap font-mono text-sm font-semibold text-foreground">{formatPrice(tender.price)}</p>
         <span className="inline-flex items-center gap-1 rounded-full bg-emerald/10 px-2.5 py-1 text-[11px] font-bold text-emerald">

@@ -69,7 +69,7 @@ export default function TendersListView({ source }: { source: TenderSource }) {
   const pageItems = visible?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+    <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
       <FilterPanel allItems={allItems ?? EMPTY_ITEMS} onFiltersChange={setFilters} />
       <div>
         <div ref={listTopRef} className="mb-6 flex flex-wrap items-center justify-between gap-3">

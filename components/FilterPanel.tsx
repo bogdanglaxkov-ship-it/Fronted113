@@ -46,10 +46,12 @@ export default function FilterPanel({ allItems, onFiltersChange }: Props) {
 
   const prevMaxRef = useRef(maxPrice);
   useEffect(() => {
+    const prevMax = prevMaxRef.current;
+    prevMaxRef.current = maxPrice;
     setPriceRange(([lo, hi]) => {
-      const wasAtMax = hi === prevMaxRef.current;
-      prevMaxRef.current = maxPrice;
-      return wasAtMax ? [lo, maxPrice] : [Math.min(lo, maxPrice), Math.min(hi, maxPrice)];
+      const next: [number, number] =
+        hi === prevMax ? [lo, maxPrice] : [Math.min(lo, maxPrice), Math.min(hi, maxPrice)];
+      return next[0] === lo && next[1] === hi ? [lo, hi] : next;
     });
   }, [maxPrice]);
 
